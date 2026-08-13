@@ -45,7 +45,7 @@ set_temperature(cell,temperature_lvl):
     cell.temperature = temperature_lvl
     return 
 '''
-
+# for the simulation
 #calculate_temperature (as a function of height with a little bit of randomness )
 '''
 calculates the temperature in a cell as a function of height
@@ -68,7 +68,7 @@ calculate_temperature(cell):
     return new_temperature
 '''
 
-#calculate_moisture (as a function of height and temperture and proximity to ocean and with a little bit of randomness )
+#calculate_moisture (as a function of height and temperture and proximity to water and with a little bit of randomness )
 '''
 calculates the moisture in a cell as a function of height and temperature 
 where cell is an entry in the matrix 
@@ -77,9 +77,9 @@ calculate_moisture(cell):
     height = cell.height (assuming 0-1)
     temperature = cell.temperature
     randomness_scalar = 0.05
-    proximity_to_ocean = closest_ocean(cell) (1-(closest ocean euclidan distantance / farthest tile euclidian distnace ))
-            #maybe ocean proximity can be stored within a cell and only recalculated when an ocean is created or destroyed
-    base_moisture = 0.2*(height)+0.3*(1-temperature)+0.5*(proximity_to_ocean)
+    proximity_to_water = closest_water(cell) (1-(closest water euclidan distantance / farthest tile euclidian distnace ))
+            #maybe water proximity can be stored within a cell and only recalculated when an water is created or destroyed
+    base_moisture = 0.2*(height)+0.3*(1-temperature)+0.5*(proximity_to_water)
     random_moisture = randomness_scalar*base_moisture
     random_number = 0 or 1
     if(random_number):
