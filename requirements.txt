@@ -1,3 +1,5 @@
 numpy
 noise
 pytest
+opensimplex
+ursina
