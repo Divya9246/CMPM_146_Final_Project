@@ -1,4 +1,4 @@
-# import climate.py
+from src.core.constants import(SEA_LEVEL,WATER,MAX_TEMPERATURE,MAX_MOISTURE,WATER,GRASSLAND,FOREST,DESERT)
 '''
 biome_set = {
 Water
@@ -37,17 +37,15 @@ Desert
 '''
 
 '''
-returns the biome type of cell 
-get_biomeType(cell):
-    return cell.biome
+calculatesWater(cell):
+    if cell.height <= sea_level:
+        return TRUE
+    return FALSE
 '''
-
-
-'''
-determines the biome type based on the cell 
-set_biomeType(cell,biome_type):
-    cell.biome = biome_type
-'''
+def calculatesWater(cell):
+    if(cell.height <= SEA_LEVEL):
+        return True
+    return False
 
 '''
 calcualtes the type of biome that a cell should be based on the bioclimatic variablse 
@@ -72,6 +70,26 @@ calculate_biomeType(cell):
          biome_type = Grassland
     return biome_type
 '''
+def calculate_biomeType(cell):
+    temperature_state = check_highTemperature(cell)
+    moisture_state =check_highMoisture(cell)
+    truth_values = [temperature_state,moisture_state]
+    height = cell.height
+    
+    if(height <=SEA_LEVEL):
+        biome_type = WATER
+    elif(truth_values == [0,0]):
+        biome_type = GRASSLAND
+    elif(truth_values == [0,1]):
+        biome_type = FOREST
+    elif(truth_values == [1,0]):
+        biome_type = DESERT
+    elif(truth_values == [1,1]):
+        biome_type = GRASSLAND
+    else: # shld never happen though
+        biome_type = GRASSLAND
+    return biome_type
+
 
 '''
 helper function
@@ -85,9 +103,14 @@ check_highTemperature(cell):
     return false 
 
 '''
+
+def check_highTemperature(cell):
+    if(cell.temperature >= MAX_TEMPERATURE/2):
+        return True
+    return False
+
 '''
 helper function
-
 returns true if above the threshold, false if otherwise 
 no hysteresis version 
 check_highMoisture(cell):
@@ -95,8 +118,12 @@ check_highMoisture(cell):
     if(Moisture>=0.5):
         return True
     return false 
-
 '''
+
+def check_highMoisture(cell):
+    if(cell.moisture>=MAX_MOISTURE/2):
+        return True
+    return False
 
 '''
 helper function

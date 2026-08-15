@@ -2,4 +2,4 @@
 # (climate of surrounding cell)*0.3 + (climate of cell)*0.7
 #updates the climate of the cell 
 
-#
+#get neighbors
