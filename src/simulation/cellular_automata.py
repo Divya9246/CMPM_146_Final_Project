@@ -1,10 +1,10 @@
-#updates based on the surrounding 4 cells (up, down, left, right ) and local 
+#updates based on the surrounding cells and local 
 # (climate of surrounding cell)*0.3 + (climate of cell)*0.7
 #updates the climate of the cell 
 
 #neighbors influence each others climate
-from src.core.constants import(WATER,MAX_TEMPERATURE,MAX_MOISTURE,WATER,GRASSLAND,FOREST,DESERT)
-from src.simulation.environmental_rules import(check_highTemperature,check_highMoisture)
+from src.core.constants import(MAX_TEMPERATURE,MAX_MOISTURE,WATER,GRASSLAND,FOREST,DESERT)
+from src.simulation.environmental_rules import(calculate_biomeType)
 
 #neighbors influence the biome spread 
     #find neighbors of cell
@@ -41,18 +41,11 @@ def biome_spread(world):
 #returns true if the cell is a valid change to the target biome
 #the cell's biome shouldnt be the target biome
 def valid_spreadBiome(cell,target_biome):
+    #biome =environmental_rules.calculate_biomeType(cell)
     if(cell.biome == target_biome):
         return False
-    temperature_state = check_highTemperature(cell)
-    moisture_state =check_highMoisture(cell)
-    truth_values = [temperature_state,moisture_state]
-    if((target_biome == GRASSLAND)and(truth_values == [0,0])):
-        return True
-    elif((target_biome == FOREST)and(truth_values == [0,1])):
-        return True
-    elif((target_biome == DESERT)and(truth_values == [1,0])):
-        return True
-    elif((target_biome == GRASSLAND)and(truth_values == [1,1])):
+    biome =calculate_biomeType(cell)
+    if((target_biome == biome)):
         return True
     else:
         return False

@@ -1,132 +1,92 @@
 from src.world.world_grid import World
-from src.simulation import climate
-from src.simulation import environmental_rules
-from src.simulation import cellular_automata
-from src.core.constants import(WATER,GRASSLAND,FOREST,DESERT)
+from src.core.constants import WATER, GRASSLAND, FOREST, DESERT
 
+from src.simulation.biome_simulation import simulate_year
+
+from ursina import Ursina, EditorCamera, invoke
+
+from src.world.terrain_generator import generate_world
+from src.world.biome_renderer import build_terrain, update_cell_visual
+from src.simulation.environmental_rules import calculate_biomeType
 import random
-import time
 
-#for visualization so can comment out 
-import matplotlib.pyplot as plt
-biome_values = {
-    WATER: 0,
-    GRASSLAND: 1,
-    FOREST: 2,
-    DESERT: 3
-}
+YEAR_DELAY = 3
 
-wait_time = 20
 
 def main():
     print("Echo Earth")
     print("simulation_test")
     print("Project initialized successfully.")
     print("Initializing world")
-    #random.seed(123)
-    world = World()
-    
 
-    # randomize world
-    for row in world.grid:
-        for cell in row:
-            cell.height = random.randint(0, 50)
-    for row in world.grid:
-        for cell in row:
-            cell.biome = environmental_rules.calculate_biomeType(cell)
-    for row in world.grid:
-        for cell in row:
-            cell.temperature = climate.calculate_temperature(cell) #seems to work, maybe create different calculate temperature but for wate
-    for row in world.grid:
-        for cell in row: 
-            cell.moisture = climate.calculate_moisture(cell,world)
-    for row in world.grid:
-        for cell in row:
-            cell.biome = environmental_rules.calculate_biomeType(cell)
-    
-    
-    #printing the hieght map
-    for row in world.grid: 
-        for cell in row:
-            print(f"{cell.height:5.1f}", end=" ")
-        print()
+    app = Ursina()
+
+    # Generate Saurav's initial world
+    random_seed = random.randint(1,999)
+    world = World(seed=random_seed)
+    generate_world(world, random_seed)
 
     print("printing temperature")
     for row in world.grid:
-            for cell in row:
-                print(f"{cell.temperature:5.1f}", end=" ")
-            print()
-    
-    print("printing moisture")
+        for cell in row:
+            print(f"{cell.temperature:5.1f}", end="")
+        print()
+
+    print("printing environment")
     for row in world.grid:
-            for cell in row:
-                 print(f"{cell.moisture:5.1f}", end="")
-            print()
+        for cell in row:
+            if cell.biome == WATER:
+                print("W", end=" ")
+            elif cell.biome == GRASSLAND:
+                print("G", end=" ")
+            elif cell.biome == FOREST:
+                print("F", end=" ")
+            else:
+                print("D", end=" ")
+        print()
 
-    print("printing water")
-    for row in world.grid:
-            for cell in row:
-                if(cell.biome == WATER):
-                    print("W", end=" ")
-                elif(cell.biome == GRASSLAND):
-                    print("G", end=" ")
-                elif(cell.biome == FOREST):
-                    print("F", end=" ")
-                else:
-                    print("D", end=" ")
-            print()
-    i = 0
-    # while(True):
-    #     print(f"{i}th Year ---------------------------------------")
-    #     cellular_automata.biome_spread(world)
-    #     for row in world.grid:
-    #             for cell in row:
-    #                 if(cell.biome == WATER):
-    #                     print("W", end="")
-    #                 elif(cell.biome == GRASSLAND):
-    #                     print("G", end="")
-    #                 elif(cell.biome == FOREST):
-    #                     print("F", end="")
-    #                 else:
-    #                     print("D", end="")
-    #             print()
-    #     i+=1
-    #     time.sleep(wait_time)
+    # Build initial 3D world
+    build_terrain(world)
 
-    #for visualization 
-    plt.ion()
+    EditorCamera()
 
-    i = 0
-    while True:
-        print(f"{i}th Year ---------------------------------------")
-        print(f"{world.count_biomes()}")
+    year = 0
+
+    def run_year():
+        nonlocal year
+
+        print(f"Year {year}")
+        print(world.count_biomes())
+        ideal_counts = {
+            WATER: 0,
+            GRASSLAND: 0,
+            FOREST: 0,
+            DESERT: 0
+        }
+
         for row in world.grid:
             for cell in row:
-                cell.temperature = climate.calculate_temperature(cell) #seems to work, maybe create different calculate temperature but for wate
+                ideal_biome = calculate_biomeType(cell)
+                ideal_counts[ideal_biome] += 1
+
+        print("Climate suitability:", ideal_counts)
+        print("Actual biomes:", world.count_biomes())
+
+        simulate_year(world)
         for row in world.grid:
-            for cell in row: 
-                cell.moisture = climate.calculate_moisture(cell,world)
+            for cell in row:
+                update_cell_visual(cell)
+        
         
 
-        cellular_automata.biome_spread(world)
+        year += 1
 
-        visual_grid = []
+        invoke(run_year, delay=YEAR_DELAY)
 
-        for row in world.grid:
-            visual_row = []
+    invoke(run_year, delay=YEAR_DELAY)
 
-            for cell in row:
-                visual_row.append(biome_values[cell.biome])
+    app.run()
 
-            visual_grid.append(visual_row)
-
-        plt.clf()
-        plt.imshow(visual_grid)
-        plt.title(f"Year {i}")
-        plt.pause(1)
-
-        i += 1
-                
 
 if __name__ == "__main__":
     main()

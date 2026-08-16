@@ -1,4 +1,4 @@
-from src.core.constants import(SEA_LEVEL,WATER,MAX_TEMPERATURE,MAX_MOISTURE,WATER,GRASSLAND,FOREST,DESERT)
+from src.core.constants import *
 '''
 biome_set = {
 Water
@@ -36,16 +36,6 @@ Desert
 
 '''
 
-'''
-calculatesWater(cell):
-    if cell.height <= sea_level:
-        return TRUE
-    return FALSE
-'''
-def calculatesWater(cell):
-    if(cell.height <= SEA_LEVEL):
-        return True
-    return False
 
 '''
 calcualtes the type of biome that a cell should be based on the bioclimatic variablse 
@@ -70,94 +60,23 @@ calculate_biomeType(cell):
          biome_type = Grassland
     return biome_type
 '''
+
+'''
+WATER_HEIGHT_MAX = 25.0          
+DESERT_MOISTURE_MAX = 25.0        
+FOREST_MOISTURE_MIN = 55.0        
+'''
+
 def calculate_biomeType(cell):
-    temperature_state = check_highTemperature(cell)
-    moisture_state =check_highMoisture(cell)
-    truth_values = [temperature_state,moisture_state]
-    height = cell.height
-    
-    if(height <=SEA_LEVEL):
-        biome_type = WATER
-    elif(truth_values == [0,0]):
-        biome_type = GRASSLAND
-    elif(truth_values == [0,1]):
-        biome_type = FOREST
-    elif(truth_values == [1,0]):
-        biome_type = DESERT
-    elif(truth_values == [1,1]):
-        biome_type = GRASSLAND
-    else: # shld never happen though
-        biome_type = GRASSLAND
-    return biome_type
-
-
-'''
-helper function
-
-returns true if above the threshold, false if otherwise 
-no hysteresis version 
-check_highTemperature(cell):
-    temperature = cell.temperature
-    if(temperature>=0.5):
-        return True
-    return false 
-
-'''
-
-def check_highTemperature(cell):
-    if(cell.temperature >= MAX_TEMPERATURE/2):
-        return True
-    return False
-
-'''
-helper function
-returns true if above the threshold, false if otherwise 
-no hysteresis version 
-check_highMoisture(cell):
-    Moisture = cell.Moisture
-    if(Moisture>=0.5):
-        return True
-    return false 
-'''
-
-def check_highMoisture(cell):
-    if(cell.moisture>=MAX_MOISTURE/2):
-        return True
-    return False
-
-'''
-helper function
-
-returns true if above the threshold, false if otherwise 
-hysteresis version 
-check_highTemperature_H(cell):
-    temperature = cell.temperature
-    if(temperature>=0.55):
-        return_value = True
-    elif(temperature<=0.45):
-        return_value = False
-    else                                              #((temperature>0.45) and(temperature<0.55))):
-        return cell.temperature_state (True or false)
-    cell.temperature_state =  return_value
-    return cell.temperature_state
-
-'''
-
-'''
-helper function
-
-returns true if above the threshold, false if otherwise 
-hysteresis version 
-check_highmoisture_H(cell):
-    moisture = cell.moisture
-    if(moisture>=0.55):
-        return_value = True
-    elif(moisture<=0.45):
-        return_value = False
-    else                                              #((moisture>0.45) and(moisture<0.55))):
-        return cell.moisture_state (True or false)
-    cell.moisture_state =  return_value
-    return cell.moisture_state
-
-'''
-
+    height_val = cell.height
+    temperature_val = cell.temperature
+    moisture_val = cell.moisture
+    if height_val < WATER_HEIGHT_MAX:
+        return WATER
+    if ((moisture_val > FOREST_MOISTURE_MIN) and (temperature_val < FOREST_TEMPERATURE_MAX)):
+        return FOREST
+    # if ((moisture_val < DESERT_MOISTURE_MAX) and (temperature_val > DESERT_TEMPERATURE_MIN)):
+    #     return DESERT
+    if ((moisture_val < DESERT_MOISTURE_MAX)):
+            return DESERT
+    return GRASSLAND

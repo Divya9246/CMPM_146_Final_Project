@@ -2,7 +2,7 @@
 
 #get_moisture 
 #where mositure 
-from src.core.constants import(MIN_MOISTURE,MAX_MOISTURE,MIN_TEMPERATURE,MAX_TEMPERATURE,WORLD_HEIGHT,WATER)
+from src.core.constants import *
 import random
 #defines
 MIN_RANDOMNESS_SCALAR = 0.05
@@ -18,13 +18,16 @@ moisture (precipitation) is a function of height and temperature
 # returns the new temperature of the cell
 def calculate_temperature(cell): 
     height = cell.height #0-50
+    original_temperature = cell.temperature
+    latitude_factor = 1.0 - (cell.y / WORLD_HEIGHT) * TEMP_LATITUDE_FACTOR    
     normalized_height = height/WORLD_HEIGHT
     base_temperature = (1 - normalized_height)*100
     random_temperature = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_temperature
     random_number = random.randint(0,1)
     if(random_number):
         random_temperature = random_temperature*-1
-    new_temperature = base_temperature+random_temperature
+    target_temperature = (base_temperature*latitude_factor+random_temperature)
+    new_temperature = (0.9)*original_temperature+target_temperature*(0.1)
     if(new_temperature<MIN_TEMPERATURE):
         new_temperature = MIN_TEMPERATURE
     if(new_temperature>MAX_TEMPERATURE):
@@ -34,18 +37,38 @@ def calculate_temperature(cell):
 #calculate moisture (as a function of height and proximity to "water", and temperature)
 # where cell is a cell in the world
 # returns the new moisture of the cell
+
+'''
+ height = cell.height #0-50
+original_temperature = cell.temperature
+latitude_factor = 1.0 - (cell.y / WORLD_HEIGHT) * TEMP_LATITUDE_FACTOR    
+normalized_height = height/MAX_TERRAIN_HEIGHT
+base_temperature = (1 - normalized_height)*100
+random_temperature = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_temperature
+random_number = random.randint(0,1)
+if(random_number):
+    random_temperature = random_temperature*-1
+target_temperature = (base_temperature*latitude_factor+random_temperature)
+new_temperature = (0.9)*original_temperature+target_temperature*(0.1)
+if(new_temperature<MIN_TEMPERATURE):
+    new_temperature = MIN_TEMPERATURE
+if(new_temperature>MAX_TEMPERATURE):
+    new_temperature = MAX_TEMPERATURE
+return new_temperature
+'''
 def calculate_moisture(cell,World): 
     height = cell.height #0-50
     temperature = cell.temperature
+    base_moisture = cell.moisture
     normalized_height = height/WORLD_HEIGHT
     normalized_temperature = temperature/MAX_TEMPERATURE
     closness_to_water = proximity_to_water(cell,World)
-    base_moisture = (0.2*(normalized_height)+0.1*(1-normalized_temperature)+0.7*(closness_to_water))*MAX_MOISTURE
-    random_moisture = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_moisture
+    random_moisture = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_moisture/MAX_MOISTURE
     random_number = random.randint(0,1)
     if(random_number):
         random_moisture = random_moisture*-1
-    new_moisture = base_moisture+random_moisture
+    target_moisture = ((0.1)*normalized_height+(0.1)*(1-normalized_temperature)+(0.6)*closness_to_water+(0.2)*random_moisture)*MAX_MOISTURE
+    new_moisture = 0.9*base_moisture+0.1*target_moisture
     if(new_moisture<MIN_MOISTURE):
         new_moisture = MIN_MOISTURE
     if(new_moisture>MAX_MOISTURE):
