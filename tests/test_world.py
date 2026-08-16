@@ -8,19 +8,20 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from src.world.world_grid import World
 from src.world.terrain_generator import generate_world
 from src.core.world_types import Cell
+from src.core.constants import WORLD_WIDTH, WORLD_HEIGHT, BIOME_TYPES
 
 
 def test_grid_dimensions():
 	w = World()
-	assert w.width == 80 and w.height == 80
-	assert sum(1 for _ in w.get_all_cells()) == 6400
+	assert w.width == WORLD_WIDTH and w.height == WORLD_HEIGHT
+	assert sum(1 for _ in w.get_all_cells()) == WORLD_WIDTH * WORLD_HEIGHT
 
 def test_get_cell_bounds():
 	w = World()
 	assert w.get_cell(0, 0) is not None
-	assert w.get_cell(79, 79) is not None
+	assert w.get_cell(WORLD_WIDTH - 1, WORLD_HEIGHT - 1) is not None
 	assert w.get_cell(-1, 0) is None
-	assert w.get_cell(80, 80) is None
+	assert w.get_cell(WORLD_WIDTH, WORLD_HEIGHT) is None
 
 def test_neighbors_count():
 	w = World()
@@ -30,16 +31,17 @@ def test_neighbors_count():
 
 def test_radius():
 	w = World()
-	assert len(w.get_cells_in_radius(40, 40, 2)) == 25
+	mid = WORLD_WIDTH // 2
+	assert len(w.get_cells_in_radius(mid, mid, 2)) == 25
 
 def test_generation_fills_all_cells():
 	w = World()
 	generate_world(w, seed=42)
 	for cell in w.get_all_cells():
-		assert 0.0 <= cell.height <= 1.0
-		assert 0.0 <= cell.temperature <= 1.0
-		assert 0.0 <= cell.moisture <= 1.0
-		assert cell.biome in ("water", "grassland", "forest", "desert")
+		assert 0.0 <= cell.height <= 100.0
+		assert 0.0 <= cell.temperature <= 100.0
+		assert 0.0 <= cell.moisture <= 100.0
+		assert cell.biome in BIOME_TYPES
 
 def test_reproducibility():
 	w1 = World()
@@ -53,7 +55,7 @@ def test_all_biomes_present():
 	w = World()
 	generate_world(w, seed=42)
 	counts = w.count_biomes()
-	for b in ("water", "grassland", "forest", "desert"):
+	for b in BIOME_TYPES:
 		assert counts.get(b, 0) > 0, f"{b} missing"
 
 def test_water_zero_food():
@@ -66,14 +68,16 @@ def test_water_zero_food():
 def test_high_elevation_cold():
 	w = World()
 	generate_world(w, seed=42)
-	high = [c for c in w.get_all_cells() if c.height > 0.7]
-	low = [c for c in w.get_all_cells() if 0.3 < c.height < 0.5]
+	high = [c for c in w.get_all_cells() if c.height > 70]
+	low = [c for c in w.get_all_cells() if 30 < c.height < 50]
 	if high and low:
-		assert sum(c.temperature for c in high)/len(high) < sum(c.temperature for c in low)/len(low)
+		avg_high = sum(c.temperature for c in high) / len(high)
+		avg_low = sum(c.temperature for c in low) / len(low)
+		assert avg_high < avg_low
 
 def test_cell_to_dict():
 	c = Cell(5, 10)
-	c.height = 0.5
+	c.height = 50.0
 	c.biome = "forest"
 	d = c.to_dict()
 	assert d["x"] == 5 and d["biome"] == "forest" and "food" in d
