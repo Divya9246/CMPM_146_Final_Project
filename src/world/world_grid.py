@@ -2,13 +2,13 @@
 # containers and Accessors for the world grid
 
 from src.core.world_types import Cell
-from src.core.constants import GRID_WIDTH, GRID_HEIGHT
+from src.core.constants import WORLD_WIDTH, WORLD_HEIGHT
 
 
 class World:
 	def __init__(self, seed=None):
-		self.width = GRID_WIDTH
-		self.height = GRID_HEIGHT
+		self.width = WORLD_WIDTH
+		self.height = WORLD_HEIGHT
 		self.seed = seed
 		self.year = 0
 
