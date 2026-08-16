@@ -5,7 +5,8 @@
 from src.core.constants import(MIN_MOISTURE,MAX_MOISTURE,MIN_TEMPERATURE,MAX_TEMPERATURE,WORLD_HEIGHT,WATER)
 import random
 #defines
-RANDOMNESS_SCALAR = 0.05
+MIN_RANDOMNESS_SCALAR = 0.05
+MAX_RANDOMNESS_SCALAR = 0.15
 MAX_DISTANCE = 10
 '''
 moisture (precipitation) is a function of height and temperature 
@@ -19,7 +20,7 @@ def calculate_temperature(cell):
     height = cell.height #0-50
     normalized_height = height/WORLD_HEIGHT
     base_temperature = (1 - normalized_height)*100
-    random_temperature = RANDOMNESS_SCALAR*base_temperature
+    random_temperature = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_temperature
     random_number = random.randint(0,1)
     if(random_number):
         random_temperature = random_temperature*-1
@@ -40,7 +41,7 @@ def calculate_moisture(cell,World):
     normalized_temperature = temperature/MAX_TEMPERATURE
     closness_to_water = proximity_to_water(cell,World)
     base_moisture = (0.2*(normalized_height)+0.1*(1-normalized_temperature)+0.7*(closness_to_water))*MAX_MOISTURE
-    random_moisture = RANDOMNESS_SCALAR*base_moisture
+    random_moisture = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_moisture
     random_number = random.randint(0,1)
     if(random_number):
         random_moisture = random_moisture*-1
