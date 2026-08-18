@@ -34,7 +34,7 @@ def simulate_year(world):
     biome_count_after = world.count_biomes()
     if biome_count_after[DESERT] > biome_count_before[DESERT]:
         #print("desert spread")
-        event_bus.emit("DESERT_SPREAD")
+        event_bus.emit("DESERT_SPREAD", { "year": world.year, "cause": "dry climate", "description": "Desert spread as the land got drier.", })
 
 
     
