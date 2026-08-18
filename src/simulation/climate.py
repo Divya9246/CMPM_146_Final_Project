@@ -65,9 +65,15 @@ def calculate_moisture(cell,World):
     closness_to_water = proximity_to_water(cell,World)
     random_moisture = random.uniform(MIN_RANDOMNESS_SCALAR,MAX_RANDOMNESS_SCALAR)*base_moisture/MAX_MOISTURE
     random_number = random.randint(0,1)
+    number_of_nearby_forest = 0 
+    neighbors = World.get_neighbors(cell.x,cell.y)
+    for neighbor in neighbors:
+        if(neighbor.biome == FOREST):
+            number_of_nearby_forest+=1
+    ratio_of_forest = number_of_nearby_forest/len(neighbors)
     if(random_number):
         random_moisture = random_moisture*-1
-    target_moisture = ((0.1)*normalized_height+(0.1)*(1-normalized_temperature)+(0.6)*closness_to_water+(0.2)*random_moisture)*MAX_MOISTURE
+    target_moisture = ((0.1)*normalized_height+(0.1)*(1-normalized_temperature)+(0.5)*closness_to_water+(0.15)*random_moisture+(0.15)*ratio_of_forest)*MAX_MOISTURE
     new_moisture = 0.9*base_moisture+0.1*target_moisture
     if(new_moisture<MIN_MOISTURE):
         new_moisture = MIN_MOISTURE

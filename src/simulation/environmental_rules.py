@@ -78,5 +78,5 @@ def calculate_biomeType(cell):
     # if ((moisture_val < DESERT_MOISTURE_MAX) and (temperature_val > DESERT_TEMPERATURE_MIN)):
     #     return DESERT
     if ((moisture_val < DESERT_MOISTURE_MAX)):
-            return DESERT
+        return DESERT
     return GRASSLAND
