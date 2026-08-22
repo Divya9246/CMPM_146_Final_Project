@@ -1,6 +1,9 @@
+from src.ui.app import run
+
+
 def main():
-    print("Echo Earth")
-    print("Project initialized successfully.")
+    print("Echo Earth — starting...")
+    run()
 
 
 if __name__ == "__main__":
