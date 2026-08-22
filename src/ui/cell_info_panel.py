@@ -1,21 +1,14 @@
 """P5 — right-hand panel: tools, selected-cell info, settlement info, stats.
 
-Follows slide 21: show useful information in simple language, hide debug
-values, keep the main screen clean.
+Shows P1's terrain values, P2's biome condition, and P3's real settlement
+state (name, population, food/water supply, behavior state) in the plain
+language the design deck asks for.
 """
 import pygame
 
 from src.ui import theme
 from src.ui import controls
 from src.ui.widgets import Button
-
-
-def _condition_word(suitability):
-    if suitability > 0.45:
-        return "Healthy"
-    if suitability > 0.15:
-        return "Fragile"
-    return "Harsh"
 
 
 class CellInfoPanel:
@@ -47,10 +40,10 @@ class CellInfoPanel:
             b.draw(screen, font_small)
         y = self.tool_buttons[-1].rect.bottom + 12
 
-        # armed-tool hint / last action feedback
+        # last action feedback / armed-tool hint
         if self.app.feedback:
-            y = self._text(screen, font_small, self.app.feedback, x, y,
-                           theme.ACCENT) + 6
+            y = self._wrapped(screen, font_small, self.app.feedback, x, y,
+                              theme.ACCENT) + 6
 
         y = self._section(screen, font, "SELECTED AREA", x, y)
         cell = self.app.selected
@@ -58,28 +51,29 @@ class CellInfoPanel:
             y = self._text(screen, font_small, "Click a cell on the map.", x, y,
                            theme.TEXT_DIM)
         else:
-            suit = self.app.world.forest_suitability(cell)
             rows = [
                 f"Location: ({cell.x}, {cell.y})",
                 f"Biome: {cell.biome.capitalize()}",
+                f"Elevation: {cell.height:.0f}",
                 f"Temperature: {cell.temperature:.0f}",
                 f"Moisture: {cell.moisture:.0f}",
-                f"Condition: {_condition_word(suit)}",
+                f"Food value: {cell.food:.0f}",
+                f"Condition: {self.app.game.condition_word(cell)}",
             ]
             for r in rows:
                 y = self._text(screen, font_small, r, x, y)
 
-            s = self.app.world.settlement_at(cell.x, cell.y)
+            s = self.app.game.settlement_at(cell.x, cell.y)
             if s:
-                y = self._section(screen, font, "SETTLEMENT", x, y + 6)
+                y = self._section(screen, font, s.name.upper(), x, y + 6)
                 for r in (f"Population: {s.population}",
-                          f"Food: {s.food:.0f}   Water: {s.water:.0f}",
-                          f"Status: {s.status}",
-                          f"Founded: year {s.founded_year}"):
+                          f"Food supply: {s.food_supply:.0f}",
+                          f"Water supply: {s.water_supply:.0f}",
+                          f"Status: {s.state}"):
                     y = self._text(screen, font_small, r, x, y)
 
         # world stats at the bottom of the panel
-        stats = self.app.world.stats()
+        stats = self.app.game.stats()
         y = self.rect.bottom - 118
         y = self._section(screen, font, "WORLD", x, y)
         for k in ("forest %", "desert %", "grass %", "settlements", "population"):
@@ -89,6 +83,21 @@ class CellInfoPanel:
         surf = font.render(text, True, color)
         screen.blit(surf, (x, y))
         return y + surf.get_height() + 3
+
+    def _wrapped(self, screen, font, text, x, y, color=theme.TEXT):
+        """Simple word-wrap so long messages from P4 fit the panel."""
+        words, line = text.split(), ""
+        max_w = self.rect.w - 24
+        for w in words:
+            trial = (line + " " + w).strip()
+            if font.size(trial)[0] <= max_w:
+                line = trial
+            else:
+                y = self._text(screen, font, line, x, y, color)
+                line = w
+        if line:
+            y = self._text(screen, font, line, x, y, color)
+        return y
 
     def _section(self, screen, font, title, x, y):
         y = self._text(screen, font, title, x, y + 4, theme.TEXT_DIM)

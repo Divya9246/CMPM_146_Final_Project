@@ -1,14 +1,14 @@
-"""P5 — the History overlay: the story of the planet (slide 24).
+"""P5 — the History overlay: the story of the planet.
 
-Reads events from P4's EventManager through the world object and shows the
-most recent ones as readable lines. P4 owns what gets recorded and how it is
-worded; this panel only displays it.
+Displays P4's HistoryGenerator output (titled story lines like
+"Year 17 — The Great Clearing: ...") plus the end-of-run planet summary
+from P4's statistics module.
 """
 import pygame
 
 from src.ui import theme
 
-MAX_LINES = 24
+MAX_LINES = 22
 
 
 class HistoryPanel:
@@ -30,17 +30,30 @@ class HistoryPanel:
         screen.blit(title, (x, y))
         y += title.get_height() + 10
 
-        events = self.app.world.events.get_all_events()[-MAX_LINES:]
-        if not events:
+        lines = self.app.game.history_lines()
+        if not lines:
             surf = font_small.render(
                 "Nothing has happened yet. Let time run, or act on the world.",
                 True, theme.TEXT_DIM)
             screen.blit(surf, (x, y))
-        for ev in events:
-            line = f"Year {ev.year} — {ev.description}"
-            surf = font_small.render(line, True, theme.TEXT)
+        shown = lines[-MAX_LINES:]
+        if len(lines) > MAX_LINES:
+            surf = font_small.render(
+                f"... {len(lines) - MAX_LINES} earlier events ...",
+                True, theme.TEXT_DIM)
             screen.blit(surf, (x, y))
             y += surf.get_height() + 5
+        for line in shown:
+            surf = font_small.render(line[:110], True, theme.TEXT)
+            screen.blit(surf, (x, y))
+            y += surf.get_height() + 5
+
+        # planet summary (P4's statistics) at the bottom
+        s = self.app.game.summary()
+        summary = (f"So far: {s['player_interventions']} player actions, "
+                   f"{s['migrations']} migrations, {s['collapses']} collapses.")
+        surf = font_small.render(summary, True, theme.ACCENT)
+        screen.blit(surf, (x, self.rect.bottom - 48))
 
         hint = font_small.render("Press H or click History to close",
                                  True, theme.TEXT_DIM)

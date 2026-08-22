@@ -38,7 +38,7 @@ class Hud:
         for b in self.buttons:
             b.draw(screen, font)
 
-        year = font_big.render(f"Year {self.app.world.year}", True, theme.ACCENT)
+        year = font_big.render(f"Year {self.app.game.year}", True, theme.ACCENT)
         screen.blit(year, (theme.WINDOW_W - year.get_width() - 14, 12))
 
         state = font.render(self.clock.label, True, theme.TEXT_DIM)

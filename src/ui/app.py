@@ -1,40 +1,19 @@
-"""P5 — the Echo Earth application: game loop and system integration.
+"""P5 — the Echo Earth application: game loop, fully integrated.
 
-INTEGRATION SWAP POINTS (for Sprint 2)
---------------------------------------
-The UI talks to the world only through the object created in `make_world()`.
-When teammates' real modules are merged, replace the MockWorld pieces:
-
-  * P1 terrain  -> build the cell grid with src/world/ instead of
-                   MockWorld._generate()
-  * P2 climate  -> call the real per-tick biome/climate update instead of
-                   MockWorld._tick_biomes()
-  * P3 agents   -> real settlement objects/AI instead of MockSettlement and
-                   MockWorld._tick_settlements()
-  * P4 actions  -> already integrated: the UI calls src/player/player_tools
-                   and displays src/history/ events; P4's handlers just need
-                   to subscribe to the same event names MockWorld does.
-
-As long as the replacement exposes: .cells / .cell(x,y) / .neighbors /
-.settlement_at / .forest_suitability / .stats / .tick() / .year / .events,
-nothing in the UI has to change.
+All five systems are connected through src/ui/game_world.py:
+P1 terrain -> P2 climate/biomes -> P3 settlement AI -> P4 player/history,
+with this module providing the HUD, time controls, input, and feedback.
 """
 import pygame
 
-from src.core.event_bus import event_bus
 from src.ui import theme, controls
-from src.ui.mock_world import MockWorld
+from src.ui.game_world import GameWorld
 from src.ui.sim_clock import SimClock
 from src.ui.map_view import MapView
 from src.ui.hud import Hud
 from src.ui.cell_info_panel import CellInfoPanel
 from src.ui.history_panel import HistoryPanel
 from src.ui.widgets import Notifications
-
-
-def make_world(seed=None):
-    """Single place where the world implementation is chosen."""
-    return MockWorld(seed=seed)
 
 
 class EchoEarthApp:
@@ -56,23 +35,27 @@ class EchoEarthApp:
         self.running = True
 
         self._build_world(seed)
-        event_bus.subscribe("HISTORY_EVENT", self._on_history_event)
 
     # ---- world / notifications -------------------------------------------
     def _build_world(self, seed=None):
-        self.world = make_world(seed)
-        self.map_view = MapView(self.world)
+        self.game = GameWorld(seed)
+        self.map_view = MapView(self.game)
         self.hud = Hud(self.clock, self)
         self.panel = CellInfoPanel(self)
         self.history_panel = HistoryPanel(self)
+        self._seen_events = len(self.game.events.get_all_events())
 
-    def _on_history_event(self, ev):
-        self.notifications.push(f"Year {ev.year}: {ev.description}")
+    def _pump_notifications(self):
+        """Toast any events recorded (by P4's EventManager) since last frame."""
+        events = self.game.events.get_all_events()
+        for ev in events[self._seen_events:]:
+            self.notifications.push(f"Year {ev.year}: {ev.description}")
+        self._seen_events = len(events)
 
     def reset_world(self):
         self.selected = None
         self.armed_tool = None
-        self.feedback = "World reset."
+        self.feedback = "New world generated."
         self.clock.paused = True
         self._build_world()          # new seed each reset
 
@@ -88,12 +71,8 @@ class EchoEarthApp:
         self.selected = cell
         if not self.armed_tool:
             return
-        quality, reason = controls.preview(self.world, self.armed_tool, cell)
-        if quality == "bad":
-            self.feedback = f"Blocked: {reason}"
-            return
-        controls.apply_tool(self.armed_tool, cell)
-        self.feedback = f"{self.armed_tool} done. {reason}"
+        ok, message = controls.apply_tool(self.game, self.armed_tool, cell)
+        self.feedback = message
 
     # ---- event handling ---------------------------------------------------
     def handle_event(self, event):
@@ -129,13 +108,14 @@ class EchoEarthApp:
     # ---- per-frame update/draw (also used by headless tests) --------------
     def step_frame(self, dt):
         for _ in range(self.clock.update(dt)):
-            self.world.tick()
+            self.game.tick()
+        self._pump_notifications()
         self.notifications.update(dt)
 
         hovered = self.map_view.cell_at_pixel(pygame.mouse.get_pos())
         quality = None
         if hovered and self.armed_tool:
-            quality, _ = controls.preview(self.world, self.armed_tool, hovered)
+            quality, _ = controls.preview(self.game, self.armed_tool, hovered)
 
         self.screen.fill(theme.BG)
         self.map_view.draw(self.screen, self.selected, hovered, quality)

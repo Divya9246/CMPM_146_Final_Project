@@ -1,11 +1,11 @@
-"""P5 — tests for the UI-side logic that doesn't need a window."""
+"""P5 — integration tests: UI layer driving the real P1-P4 systems."""
 import os
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
-from src.core.constants import FOREST, GRASSLAND, WATER
+from src.core.constants import WATER, FOREST, GRASSLAND
 from src.ui.sim_clock import SimClock
-from src.ui.mock_world import MockWorld
+from src.ui.game_world import GameWorld
 from src.ui import controls
 
 
@@ -21,34 +21,56 @@ def test_clock_speed_scales_ticks():
     assert clock.update(1.0) == 4
 
 
-def test_world_generates_and_ticks():
-    world = MockWorld(seed=42)
-    stats = world.stats()
-    assert 0 < stats["water %"] < 100
-    for _ in range(10):
-        world.tick()
-    assert world.year == 10
+def test_world_generates_all_biomes():
+    game = GameWorld(seed=42)
+    stats = game.stats()
+    assert stats["water %"] > 0
+    assert stats["forest %"] > 0
 
 
-def test_same_seed_same_world():
-    a, b = MockWorld(seed=7), MockWorld(seed=7)
-    assert [c.biome for row in a.cells for c in row] == \
-           [c.biome for row in b.cells for c in row]
+def test_simulation_ticks_advance_year():
+    game = GameWorld(seed=42)
+    for _ in range(5):
+        game.tick()
+    assert game.year == 5
 
 
 def test_preview_blocks_invalid_actions():
-    world = MockWorld(seed=42)
-    water = next(c for row in world.cells for c in row if c.biome == WATER)
-    grass = next(c for row in world.cells for c in row if c.biome == GRASSLAND)
-    assert controls.preview(world, controls.PLANT, water)[0] == "bad"
-    assert controls.preview(world, controls.DEFOREST, grass)[0] == "bad"
-    assert controls.preview(world, controls.SETTLE, water)[0] == "bad"
+    game = GameWorld(seed=42)
+    water = next(c for row in game.cells for c in row if c.biome == WATER)
+    grass = next(c for row in game.cells for c in row if c.biome == GRASSLAND)
+    assert controls.preview(game, controls.PLANT, water)[0] == "bad"
+    assert controls.preview(game, controls.DEFOREST, grass)[0] == "bad"
+    assert controls.preview(game, controls.SETTLE, water)[0] == "bad"
 
 
-def test_plant_forest_records_history():
-    world = MockWorld(seed=42)
-    grass = next(c for row in world.cells for c in row if c.biome == GRASSLAND)
-    controls.apply_tool(controls.PLANT, grass)
-    assert grass.biome == FOREST
-    events = world.events.get_all_events()
+def test_plant_forest_changes_cell_and_records_history():
+    game = GameWorld(seed=42)
+    spot = next(c for row in game.cells for c in row
+                if controls.preview(game, controls.PLANT, c)[0] in ("good", "risky"))
+    ok, msg = controls.apply_tool(game, controls.PLANT, spot)
+    assert ok
+    assert spot.biome == FOREST
+    events = game.events.get_all_events()
     assert any(e.event_type == "PLAYER_PLANTED_FOREST" for e in events)
+
+
+def test_place_settlement_creates_real_settlement_ai():
+    game = GameWorld(seed=42)
+    spot = next(c for row in game.cells for c in row
+                if controls.preview(game, controls.SETTLE, c)[0] in ("good", "risky"))
+    ok, _ = controls.apply_tool(game, controls.SETTLE, spot)
+    assert ok
+    s = game.settlement_at(spot.x, spot.y)
+    assert s is not None and s.population > 0    # P3's real Settlement
+    game.tick()                                  # AI runs without crashing
+    assert game.settlements
+
+
+def test_tick_is_fast_enough_for_4x_speed():
+    import time
+    game = GameWorld(seed=42)
+    t0 = time.time()
+    for _ in range(4):
+        game.tick()
+    assert (time.time() - t0) < 1.0, "4 ticks must fit in one second (4x speed)"

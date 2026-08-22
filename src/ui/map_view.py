@@ -1,23 +1,23 @@
 """P5 — draws the world grid and handles hover / selection / action preview.
 
-Rendering note: real 3D terrain is P1's job. Until then we fake depth by
-shading each biome color with the cell's elevation, which reads surprisingly
-well on a 2D grid.
+Works on P1's real cells: `height` is 0-100 and is used to shade each biome
+color, which fakes a 3D relief look on the 2D grid. (P1's Ursina renderer in
+src/world/biome_renderer.py stays available if the team switches to 3D.)
 """
 import pygame
 
-from src.core.constants import WORLD_WIDTH, WORLD_HEIGHT
+from src.core.constants import WORLD_WIDTH, WORLD_HEIGHT, WATER_HEIGHT_MAX
 from src.ui import theme
 
 
-def _shade(color, elevation):
-    f = 0.6 + 0.55 * elevation           # low = darker, high = lighter
+def _shade(color, height):
+    f = 0.6 + 0.55 * min(1.0, max(0.0, height / 100.0))
     return tuple(min(255, int(c * f)) for c in color)
 
 
 class MapView:
-    def __init__(self, world):
-        self.world = world
+    def __init__(self, game):
+        self.game = game
         self.rect = pygame.Rect(theme.MAP_X, theme.MAP_Y,
                                 WORLD_WIDTH * theme.CELL_PX,
                                 WORLD_HEIGHT * theme.CELL_PX)
@@ -27,7 +27,7 @@ class MapView:
             return None
         cx = (pos[0] - self.rect.x) // theme.CELL_PX
         cy = (pos[1] - self.rect.y) // theme.CELL_PX
-        return self.world.cell(cx, cy)
+        return self.game.cell(cx, cy)
 
     def _cell_rect(self, cell):
         return pygame.Rect(self.rect.x + cell.x * theme.CELL_PX,
@@ -35,14 +35,18 @@ class MapView:
                            theme.CELL_PX, theme.CELL_PX)
 
     def draw(self, screen, selected, hovered, preview_quality):
-        for row in self.world.cells:
+        for row in self.game.cells:
             for cell in row:
-                color = _shade(theme.BIOME_COLORS[cell.biome], cell.elevation)
+                shade_h = WATER_HEIGHT_MAX if cell.biome == "water" else cell.height
+                color = _shade(theme.BIOME_COLORS[cell.biome], shade_h)
                 pygame.draw.rect(screen, color, self._cell_rect(cell))
 
-        # settlements on top of terrain
-        for s in self.world.settlements:
-            r = self._cell_rect(self.world.cell(s.x, s.y)).inflate(-3, -3)
+        # settlements on top of terrain (P3's real settlements)
+        for s in self.game.settlements:
+            cell = self.game.cell(s.x, s.y)
+            if cell is None:
+                continue
+            r = self._cell_rect(cell).inflate(-3, -3)
             pygame.draw.rect(screen, theme.SETTLEMENT_COLOR, r)
             pygame.draw.rect(screen, (40, 40, 40), r, 1)
 
