@@ -1,4 +1,5 @@
 from src.core.constants import *
+import random
 '''
 biome_set = {
 Water
@@ -77,6 +78,13 @@ def calculate_biomeType(cell):
         return FOREST
     # if ((moisture_val < DESERT_MOISTURE_MAX) and (temperature_val > DESERT_TEMPERATURE_MIN)):
     #     return DESERT
-    if ((moisture_val < DESERT_MOISTURE_MAX)):
+    if ((moisture_val < DESERT_MOISTURE_MAX)and(temperature_val > 35 )):
         return DESERT
+    change_chance = random.random()
+    #problem, the grassland niche is to big so trying to slow down its spread instead of finding a niche spot of the niches
+    #goal limit grassland niche/slow grassland spreading down\
+    # 60% chance to keep current biome otherwise grassland
+    if(change_chance >= 0.4):
+        return cell.biome
     return GRASSLAND
+

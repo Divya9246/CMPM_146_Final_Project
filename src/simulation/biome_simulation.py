@@ -24,7 +24,7 @@ def simulate_year(world):
         if(chance<climate_event_chance):
             year_counter = random.randint(5,15)
             chance = random.uniform(0.0,1.0)
-            if(chance>0.5):
+            if(chance>0.6):
                 heavy_rain(world)
             else: 
                 heat_wave(world)
@@ -56,14 +56,14 @@ def heavy_rain(world):
     #         cell.temperature = climate.calculate_temperature(cell) #seems to work, maybe create different calculate temperature but for wate
     for row in world.grid:
         for cell in row: 
-            cell.moisture = cell.moisture*1.8
+            cell.moisture = cell.moisture*1.8+35
             if(cell.moisture<MIN_MOISTURE):
                     cell.moisture = MIN_MOISTURE
             if(cell.moisture>MAX_MOISTURE):
                 cell.moisture = MAX_MOISTURE
     for row in world.grid:
         for cell in row: 
-            cell.temperature = cell.temperature*0.3
+            cell.temperature = cell.temperature*0.3+15
             if(cell.temperature<MIN_TEMPERATURE):
                     cell.temperature = MIN_TEMPERATURE
             if(cell.temperature>MAX_TEMPERATURE):
@@ -80,7 +80,7 @@ def heat_wave(world):
     })
     for row in world.grid:
         for cell in row: 
-            cell.temperature = cell.temperature*1.5
+            cell.temperature = cell.temperature*1.5+50
             if(cell.temperature<MIN_TEMPERATURE):
                     cell.temperature = MIN_TEMPERATURE
             if(cell.temperature>MAX_TEMPERATURE):
