@@ -21,8 +21,8 @@ class CellInfoPanel:
         for tool in controls.TOOLS:
             self.tool_buttons.append(
                 Button((self.rect.x + 10, y, self.rect.w - 20, 30), tool,
-                       lambda t=tool: app.arm_tool(t),
-                       lambda t=tool: app.armed_tool == t))
+                        lambda t=tool: app.arm_tool(t),
+                        lambda t=tool: app.armed_tool == t))
             y += 36
 
     def handle_click(self, pos):
@@ -43,13 +43,19 @@ class CellInfoPanel:
         # last action feedback / armed-tool hint
         if self.app.feedback:
             y = self._wrapped(screen, font_small, self.app.feedback, x, y,
-                              theme.ACCENT) + 6
+                                theme.ACCENT) + 6
 
         y = self._section(screen, font, "SELECTED AREA", x, y)
         cell = self.app.selected
         if cell is None:
             y = self._text(screen, font_small, "Click a cell on the map.", x, y,
-                           theme.TEXT_DIM)
+                            theme.TEXT_DIM)
+            if not self.app.armed_tool:
+                y = self._wrapped(
+                    screen, font_small,
+                    "Pick a tool, then click the map. Green = good, yellow = risky, red = blocked.",
+                    x, y, theme.TEXT_DIM,
+                )
         else:
             rows = [
                 f"Location: ({cell.x}, {cell.y})",

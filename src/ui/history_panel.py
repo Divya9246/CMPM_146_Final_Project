@@ -50,11 +50,15 @@ class HistoryPanel:
 
         # planet summary (P4's statistics) at the bottom
         s = self.app.game.summary()
-        summary = (f"So far: {s['player_interventions']} player actions, "
-                   f"{s['migrations']} migrations, {s['collapses']} collapses.")
+        """ summary = (f"So far: {s['player_interventions']} player actions, "
+                    f"{s['migrations']} migrations, {s['collapses']} collapses.") """
+        summary = (f"Year {s['year']}: forest {s.get('forest_pct', 0)}%, "
+                f"desert {s.get('desert_pct', 0)}%, "
+                f"{s['player_interventions']} player actions, "
+                f"{s['migrations']} migrations.")
         surf = font_small.render(summary, True, theme.ACCENT)
         screen.blit(surf, (x, self.rect.bottom - 48))
 
         hint = font_small.render("Press H or click History to close",
-                                 True, theme.TEXT_DIM)
+                                True, theme.TEXT_DIM)
         screen.blit(hint, (x, self.rect.bottom - 26))

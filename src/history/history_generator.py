@@ -15,6 +15,10 @@ class HistoryGenerator:
             elif event.event_type == "PLAYER_DEFORESTED" and not seen_deforest:
                 title = "The Great Clearing"
                 seen_deforest = True
+            elif event.event_type == "DROUGHT_STARTED":
+                title = "The Heat Wave"
+            elif event.event_type == "HEAVY_RAIN_STARTED":
+                title = "The Heavy Rains"
             elif event.event_type == "DESERT_SPREAD":
                 title = "A Drying Land"
             elif event.event_type == "SETTLEMENT_MIGRATED":
